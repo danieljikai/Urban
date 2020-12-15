@@ -45,7 +45,7 @@ def process_meteorol(timeslots, directory="../TaxiBJ"):
     '''
     path = "{}/BJ_Meteorology.h5".format(directory)
     timeslots = set(timeslots)
-    data = h5py.File(path, 'r')
+    data = h5py.File(path)
     date = list(map(lambda x: x.decode('UTF-8'), data["date"]))
     windspeed = np.asarray([v for i,v in enumerate(data["WindSpeed"]) if date[i] in timeslots])
     temperature = np.asarray([v for i,v in enumerate(data["Temperature"]) if date[i] in timeslots])
@@ -146,11 +146,11 @@ def scaler(X):
     ans = np.zeros(X.shape)
     for i in range(X.shape[0]):
         for j in range(0,X.shape[1],2):
+
             MIN, MAX = X[i,j:j+2].min(), X[i,j:j+2].max()
             if MIN != MAX:
                 ans[i][j] = (X[i][j] - MIN) / (MAX - MIN) *2.0 -1
                 ans[i][j+1] = (X[i][j+1] - MIN)/(MAX - MIN) *2.0 - 1
-
     return np.asarray(ans)
 
 
@@ -158,11 +158,9 @@ def main(directory="../TaxiBJ", scale=False):
     dataset, times = [],[]
     for year in range(13,17):
         path = "{}/BJ{}_M32x32_T30_InOut.h5".format(directory, year)
-        datafile = h5py.File(path, 'r')
-        # print(list(datafile.keys()))
-        print('checking data file for year', year)
+        datafile = h5py.File(path)
         data, t = datafile["data"], datafile["date"]
-        data, t =    (data, t)
+        data, t = remove_incomplete_days(data, t)
         data[data<0] = 0
         dataset.append(data)
         times.append(t)
@@ -215,6 +213,6 @@ if __name__ == "__main__":
     np.save('../data/X_extra',X_social)
     np.save('../data/y', y)
     np.save('../data/timeslots', timeslots)
-    # print(X_hour.shape, X_day.shape, X_week.shape, y.shape)
-    # print(X.shape)
+#     print(X_hour.shape, X_day.shape, X_week.shape, y.shape)
+#     print(X.shape)
 # >>>>>>> 3a33c7d6cfd6953ed779b73236a4fa46614604d5
